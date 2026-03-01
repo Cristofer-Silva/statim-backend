@@ -1,0 +1,720 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Statim Network Orchestrator",
+        "description": "Backend service for the CheeseHacks 2026 Remote Surgery Interface. Orchestrates low-latency 5G network slices via the CAMARA QoD API to enable tele-surgery in medical deserts.",
+        "version": "0.0.1"
+    },
+    "paths": {
+        "/api/network/profiles": {
+            "get": {
+                "tags": [
+                    "Network Orchestration"
+                ],
+                "summary": "List Profiles",
+                "description": "List all available QoS profiles.\n\nReturns a set of network quality tiers the surgeon can choose\nfrom when starting a procedure. Each profile specifies maximum\nlatency and minimum throughput guarantees.",
+                "operationId": "list_profiles_api_network_profiles_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/QosProfile"
+                                    },
+                                    "type": "array",
+                                    "title": "Response List Profiles Api Network Profiles Get"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/network/session": {
+            "post": {
+                "tags": [
+                    "Network Orchestration"
+                ],
+                "summary": "Create Session",
+                "description": "Request a low-latency 5G network slice for a surgical procedure.\n\nThis is the core operation \u2014 it tells the telecom operator to\nallocate a dedicated network path (slice) between the surgeon's\nconsole and the remote robotic system, with guaranteed QoS.",
+                "operationId": "create_session_api_network_session_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateSessionRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SessionInfo"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/network/session/{session_id}": {
+            "get": {
+                "tags": [
+                    "Network Orchestration"
+                ],
+                "summary": "Get Session",
+                "description": "Check the status of an active network slice.\n\nReturns current QoS status: REQUESTED \u2192 AVAILABLE \u2192 UNAVAILABLE.\nThe dashboard polls this to show connection health.",
+                "operationId": "get_session_api_network_session__session_id__get",
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Session Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SessionInfo"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Network Orchestration"
+                ],
+                "summary": "Delete Session",
+                "description": "Tear down the network slice (end the procedure).\n\nReleases the reserved network resources. Should be called when\nthe surgeon completes or aborts the operation.",
+                "operationId": "delete_session_api_network_session__session_id__delete",
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Session Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SessionInfo"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/network/session/{session_id}/extend": {
+            "post": {
+                "tags": [
+                    "Network Orchestration"
+                ],
+                "summary": "Extend Session",
+                "description": "Extend the duration of an active network slice.\n\nUsed when a surgical procedure runs longer than initially expected.",
+                "operationId": "extend_session_api_network_session__session_id__extend_post",
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Session Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ExtendSessionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SessionInfo"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/network/metrics": {
+            "get": {
+                "tags": [
+                    "Network Orchestration"
+                ],
+                "summary": "Get Metrics",
+                "description": "Get real-time network quality metrics.\n\nReturns latency, jitter, throughput, packet loss, and signal\nstrength. When a QoD slice is active, metrics reflect the\nenhanced network quality; otherwise, degraded best-effort values.",
+                "operationId": "get_metrics_api_network_metrics_get",
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Optional session ID for slice-specific metrics",
+                            "title": "Session Id"
+                        },
+                        "description": "Optional session ID for slice-specific metrics"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NetworkMetrics"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/health": {
+            "get": {
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Health Check",
+                "description": "Server health check.\n\nReturns the current operating mode (simulation or live)\nand the configured CAMARA endpoint if in live mode.",
+                "operationId": "health_check_api_health_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ApplicationServer": {
+                "properties": {
+                    "ipv4Address": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ipv4Address"
+                    },
+                    "ipv6Address": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ipv6Address"
+                    }
+                },
+                "type": "object",
+                "title": "ApplicationServer",
+                "description": "Backend server identifier (remote surgical robot)."
+            },
+            "CreateSessionRequest": {
+                "properties": {
+                    "device": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/Device"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "applicationServer": {
+                        "$ref": "#/components/schemas/ApplicationServer"
+                    },
+                    "qosProfile": {
+                        "type": "string",
+                        "title": "Qosprofile"
+                    },
+                    "duration": {
+                        "type": "integer",
+                        "minimum": 1.0,
+                        "title": "Duration",
+                        "description": "Session duration in seconds",
+                        "default": 3600
+                    },
+                    "sink": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Sink",
+                        "description": "Notification callback URL"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "applicationServer",
+                    "qosProfile"
+                ],
+                "title": "CreateSessionRequest",
+                "description": "Request body to create a QoD session (maps to CAMARA POST /sessions)."
+            },
+            "Device": {
+                "properties": {
+                    "ipv4Address": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ipv4Address"
+                    },
+                    "ipv6Address": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ipv6Address"
+                    },
+                    "phoneNumber": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Phonenumber"
+                    }
+                },
+                "type": "object",
+                "title": "Device",
+                "description": "End-user equipment identifier (surgeon console)."
+            },
+            "ExtendSessionRequest": {
+                "properties": {
+                    "requestedAdditionalDuration": {
+                        "type": "integer",
+                        "minimum": 1.0,
+                        "title": "Requestedadditionalduration",
+                        "description": "Extra seconds to add"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "requestedAdditionalDuration"
+                ],
+                "title": "ExtendSessionRequest",
+                "description": "Request body to extend an active session."
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "HealthResponse": {
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "default": "ok"
+                    },
+                    "mode": {
+                        "type": "string",
+                        "title": "Mode"
+                    },
+                    "version": {
+                        "type": "string",
+                        "title": "Version",
+                        "default": "0.0.1"
+                    },
+                    "camara_endpoint": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Camara Endpoint"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "mode"
+                ],
+                "title": "HealthResponse",
+                "description": "Server health and configuration status."
+            },
+            "NetworkMetrics": {
+                "properties": {
+                    "latencyMs": {
+                        "type": "number",
+                        "title": "Latencyms"
+                    },
+                    "jitterMs": {
+                        "type": "number",
+                        "title": "Jitterms"
+                    },
+                    "throughputMbps": {
+                        "type": "number",
+                        "title": "Throughputmbps"
+                    },
+                    "packetLossPct": {
+                        "type": "number",
+                        "title": "Packetlosspct"
+                    },
+                    "signalStrengthDbm": {
+                        "type": "integer",
+                        "title": "Signalstrengthdbm"
+                    },
+                    "sliceActive": {
+                        "type": "boolean",
+                        "title": "Sliceactive"
+                    },
+                    "qosProfile": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Qosprofile"
+                    },
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Timestamp"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "latencyMs",
+                    "jitterMs",
+                    "throughputMbps",
+                    "packetLossPct",
+                    "signalStrengthDbm",
+                    "sliceActive",
+                    "timestamp"
+                ],
+                "title": "NetworkMetrics",
+                "description": "Real-time network quality telemetry for the surgeon's dashboard."
+            },
+            "QosProfile": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/QosProfileStatus",
+                        "default": "ACTIVE"
+                    },
+                    "maxLatencyMs": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Maxlatencyms"
+                    },
+                    "minThroughputKbps": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Minthroughputkbps"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name",
+                    "description"
+                ],
+                "title": "QosProfile",
+                "description": "A network quality profile offered by the operator."
+            },
+            "QosProfileStatus": {
+                "type": "string",
+                "enum": [
+                    "ACTIVE",
+                    "INACTIVE",
+                    "DEPRECATED"
+                ],
+                "title": "QosProfileStatus",
+                "description": "Whether a QoS profile is currently usable."
+            },
+            "QosStatus": {
+                "type": "string",
+                "enum": [
+                    "REQUESTED",
+                    "AVAILABLE",
+                    "UNAVAILABLE"
+                ],
+                "title": "QosStatus",
+                "description": "CAMARA session lifecycle states."
+            },
+            "SessionInfo": {
+                "properties": {
+                    "sessionId": {
+                        "type": "string",
+                        "title": "Sessionid"
+                    },
+                    "device": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/Device"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "applicationServer": {
+                        "$ref": "#/components/schemas/ApplicationServer"
+                    },
+                    "qosProfile": {
+                        "type": "string",
+                        "title": "Qosprofile"
+                    },
+                    "qosStatus": {
+                        "$ref": "#/components/schemas/QosStatus"
+                    },
+                    "statusInfo": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/StatusInfo"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "duration": {
+                        "type": "integer",
+                        "title": "Duration"
+                    },
+                    "startedAt": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Startedat"
+                    },
+                    "expiresAt": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Expiresat"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "sessionId",
+                    "applicationServer",
+                    "qosProfile",
+                    "qosStatus",
+                    "duration"
+                ],
+                "title": "SessionInfo",
+                "description": "Full session state returned by the API (maps to CAMARA SessionInfo)."
+            },
+            "StatusInfo": {
+                "type": "string",
+                "enum": [
+                    "DURATION_EXPIRED",
+                    "NETWORK_TERMINATED",
+                    "DELETE_REQUESTED"
+                ],
+                "title": "StatusInfo",
+                "description": "Reason a session became UNAVAILABLE."
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    },
+                    "input": {
+                        "title": "Input"
+                    },
+                    "ctx": {
+                        "type": "object",
+                        "title": "Context"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            }
+        }
+    }
+}
